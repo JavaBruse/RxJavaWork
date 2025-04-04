@@ -62,7 +62,8 @@ Schedulers позволяют управлять тем, где и как буд
 - `testMapWithError`	Ошибка внутри map	onError вызывается с "NullPointerException".
 - `testFilterWithErrorInPredicate`	Ошибка внутри filter	onError вызывается с "IllegalStateException".
 - `testFlatMapWithError`	Ошибка внутри flatMap	onError вызывается с "RuntimeException".
-- Результаты тестирования:
+
+Результаты тестирования:
 ```shell
 mvn test
 ```
