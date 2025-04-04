@@ -68,38 +68,131 @@ mvn test
 ```
 - ![img_2.png](img_2.png)
 
-## Пример использования в Main.class:
-- Пример:
+## Примеры использования в Main:
 ```java
-public static void main(String[] args) {
-        Observable<Integer> observable = Observable.create(emitter -> {
-            emitter.onNext(10);
-            emitter.onNext(20);
-            emitter.onNext(30);
-            emitter.onNext(15);
-            emitter.onNext(12);
-            emitter.onComplete();
-        });
-        observable
-                .filter(x -> x > 16)
-                .map(x -> "Значение: " + x)
-                .subscribe(new Observer<>() {
-                    public void onNext(String item) {
-                        System.out.println(item);
-                    }
+private static void filterAndMap(){ //Пример 1: filter + map
+  Observable<Integer> observable = Observable.create(emitter -> {
+    emitter.onNext(10);
+    emitter.onNext(20);
+    emitter.onNext(30);
+    emitter.onNext(15);
+    emitter.onNext(12);
+    emitter.onComplete();
+  });
 
-                    public void onError(Throwable t) {
-                        t.printStackTrace();
-                    }
+  observable
+          .filter(x -> x > 16)
+          .map(x -> "Значение: " + x)
+          .subscribe(new Observer<>() {
+            public void onNext(String item) {
+              System.out.println(item);
+            }
 
-                    public void onComplete() {
-                        System.out.println("Завершено");
-                    }
-                });
+            public void onError(Throwable t) {
+              t.printStackTrace();
+            }
+
+            public void onComplete() {
+              System.out.println("Завершено");
+            }
+          });
+}
+
+private static void flatMap(){ // Пример 2: flatMap для создания вложенных потоков
+  Observable<Integer> observable = Observable.create(emitter -> {
+    emitter.onNext(1);
+    emitter.onNext(2);
+    emitter.onNext(3);
+    emitter.onComplete();
+  });
+
+  observable
+          .flatMap(x -> Observable.create(inner -> {
+            inner.onNext(x * 10);
+            inner.onNext(x * 100);
+            inner.onComplete();
+          }))
+          .subscribe(new Observer<>() {
+            public void onNext(Object item) {
+              System.out.println("Получено: " + item);
+            }
+
+            public void onError(Throwable t) {
+              t.printStackTrace();
+            }
+
+            public void onComplete() {
+              System.out.println("Завершено");
+            }
+          });
+}
+
+private static void subscribeOnAndBack(){ // Пример 3: subscribeOn — выполнение в фоновом потоке
+  Scheduler computation = new ComputationScheduler();
+
+  Observable<String> observable = Observable.create(emitter -> {
+    System.out.println("Источник работает в потоке: " + Thread.currentThread().getName());
+    emitter.onNext("Rx");
+    emitter.onNext("Master");
+    emitter.onComplete();
+  });
+  observable
+          .subscribeOn(computation)
+          .subscribe(new Observer<>() {
+            public void onNext(String item) {
+              System.out.println("Получено: " + item);
+            }
+
+            public void onError(Throwable t) {}
+
+            public void onComplete() {
+              System.out.println("Готово");
+            }
+          });
+}
+private static void andObserveOn(){ // Пример 4: observeOn — обработка в другом потоке
+  Scheduler io = new IOThreadScheduler();
+
+  Observable<String> observable = Observable.create(emitter -> {
+    emitter.onNext("Rx");
+    emitter.onNext("Java");
+    emitter.onComplete();
+  });
+
+  observable
+          .observeOn(io)
+          .subscribe(new Observer<>() {
+            public void onNext(String item) {
+              System.out.println("Обработка в потоке: " + Thread.currentThread().getName());
+              System.out.println("Данные: " + item);
+            }
+
+            public void onError(Throwable t) {}
+
+            public void onComplete() {
+              System.out.println("Завершено");
+            }
+          });
+}
+
+private static void disposable(){ // Пример 5: Использование Disposable
+  Observable<String> observable = Observable.create(emitter -> {
+    emitter.onNext("A");
+    emitter.onNext("B");
+    emitter.onComplete();
+  });
+  Disposable disposable = observable.subscribe(new Observer<>() {
+    public void onNext(String item) {
+      System.out.println("Получено: " + item);
+    }
+
+    public void onError(Throwable t) {}
+
+    public void onComplete() {
+      System.out.println("Завершено");
+    }
+  });
+  disposable.dispose();
+  System.out.println("Подписка остановлена: " + disposable.isDisposed());
 }
 ```
-
-- результаты работы примера:
-
-![img_1.png](img_1.png)
-
